@@ -1,0 +1,39 @@
+[Unit]
+Description=Turn UDP traffic into encrypted UDP/FakeTCP/ICMP traffic using raw sockets
+ConditionFileNotEmpty=/etc/udp2raw/%i.conf
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/udp2raw --conf-file /etc/udp2raw/%i.conf
+ExecStartPre=+/usr/bin/udp2raw --conf-file /etc/udp2raw/%i.conf --gen-add
+ExecStopPost=+-/usr/bin/udp2raw --conf-file /etc/udp2raw/%i.conf --clear
+Restart=on-failure
+
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=disconnected
+PrivateDevices=yes
+ProtectHostname=yes
+ProtectClock=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=strict
+RestrictAddressFamilies=AF_INET AF_INET6 AF_PACKET
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+ProtectProc=invisible
+ProcSubset=pid
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+NoExecPaths=/
+ExecPaths=/usr/bin/udp2raw /usr/lib /usr/lib32 /usr/lib64
+CapabilityBoundingSet=CAP_NET_RAW
+AmbientCapabilities=CAP_NET_RAW
+
+[Install]
+WantedBy=multi-user.target
