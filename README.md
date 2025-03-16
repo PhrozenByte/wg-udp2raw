@@ -9,7 +9,7 @@ One can e.g. use hooks to nicely integrate `wg-udp2raw` into WireGuard. You'll f
 
 `wg-udp2raw` expects the `udp2raw@.service` Systemd unit to start `udp2raw` using the `/etc/udp2raw/<config>.conf` config file. `wg-udp2raw` will modify this config file to match what was passed to it as arguments. It will also be responsible for resolving the endpoint's hostname, and adding a direct route to the endpoint via the default interface (i.e. bypassing any VPN and thus not creating a traffic loop). You'll find the correct [`udp2raw` config](./etc/udp2raw/wg-udp2raw.conf) in this repository. It's strongly recommended that the Systemd unit starts `udp2raw` with an unprivileged user. If your distribution doesn't ship `udp2raw` with such Systemd unit, you can find an [example Systemd unit](./etc/systemd/system/udp2raw@.service) in this repository.
 
-On the endpoint's side one should use a similar `udp2raw@.service` Systemd unit to permanently run a `udp2raw` server instance. On the server's side there's no need for `wg-udp2raw`.
+On the endpoint's side one should use a similar `udp2raw@.service` Systemd unit to permanently run a `udp2raw` server instance with matching configuration. On the server's side there's no need for `wg-udp2raw`.
 
 `wg-udp2raw` was written to run with [GNU Bash](https://www.gnu.org/software/bash/). It requires the [iproute2](https://wiki.linuxfoundation.org/networking/iproute2) utilities, [sed](https://sed.sourceforge.io/), [GNU awk](https://www.gnu.org/software/gawk/), [GNU grep](https://www.gnu.org/software/grep/), `getent` from the [GNU C library](https://www.gnu.org/software/libc/), and - obviously - [`udp2raw`](https://github.com/wangyu-/udp2raw) to be installed.
 
@@ -28,4 +28,16 @@ Usage:
   ./wg-udp2raw.sh up <config> <endpoint_hostname> <endpoint_port> <local_port>
   ./wg-udp2raw.sh down <config>
   ./wg-udp2raw.sh watchdog <config> <interval>
+```
+
+On the server's side you don't need `wg-udp2raw`: You simply run both WireGuard and `udp2raw` permanently. The WireGuard setup doesn't differ from your usual setup. For `udp2raw` to work you just need to create a matching server config and start the `udp2raw@.service` Systemd unit permamently (`systemctl enable udp2raw@wg.service` and `systemctl start udp2raw@wg.service`). Here's an example `udp2raw` config (`/etc/udp2raw/wg.config`) for the server:
+
+```
+-s
+-l 0.0.0.0:51820
+-r 127.0.0.1:51820
+--raw-mode faketcp
+--cipher-mode xor
+--auth-mode simple
+-k wg-udp2raw vpn.example.com:51820
 ```
