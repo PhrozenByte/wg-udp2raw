@@ -19,7 +19,7 @@ print_usage() {
 }
 
 print_version() {
-    echo "wg-udp2raw.sh 1.0 (build 20250316)"
+    echo "wg-udp2raw.sh 1.1 (build 20250329)"
     echo
     echo "Copyright (C) 2025  Daniel Rudolf"
     echo "This work is licensed under the terms of the MIT license."
