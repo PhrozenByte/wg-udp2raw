@@ -153,12 +153,15 @@ if [ "$COMMAND" == "watchdog" ]; then
     [ -f "/run/wg-udp2raw/$CONFIG" ] || { echo "No running instance of config: $CONFIG" >&2; exit 1; }
     . "/run/wg-udp2raw/$CONFIG"
 
+    WATCHDOG_INTERVAL="$3"
+    [[ "$WATCHDOG_INTERVAL" =~ ^[0-9]+$ ]] && (( WATCHDOG_INTERVAL > 0 )) || { echo "Invalid watchdog interval: $WATCHDOG_INTERVAL" >&2; exit 1; }
+
     # check for other watchdog
     [ -z "$WATCHDOG_PID" ] || [ "$WATCHDOG_PID" == $$ ] || ! ps -p "$WATCHDOG_PID" > /dev/null 2>&1 \
         || { echo "Duplicate watchdog: $CONFIG (PID $WATCHDOG_PID)" >&2; exit 1; }
 
     # watchdog service process (internal -! option)
-    if [ "$3" == "-!"  ]; then
+    if [ $# -ge 4 ] && [ "$4" == "-!"  ]; then
         while true; do
             sleep "$WATCHDOG_INTERVAL"
             RESTART="y"
@@ -191,12 +194,9 @@ if [ "$COMMAND" == "watchdog" ]; then
         exit 0
     fi
 
-    WATCHDOG_INTERVAL="$3"
-    [[ "$WATCHDOG_INTERVAL" =~ ^[0-9]+$ ]] && (( WATCHDOG_INTERVAL > 0 )) || { echo "Invalid watchdog interval: $WATCHDOG_INTERVAL" >&2; exit 1; }
-
     # run watchdog
-    echo + "$(quote "${BASH_SOURCE[0]}" watchdog "$CONFIG" -!) &" >&2
-    "${BASH_SOURCE[0]}" watchdog "$CONFIG" -! &
+    echo + "$(quote "${BASH_SOURCE[0]}" watchdog "$CONFIG" "$WATCHDOG_INTERVAL" -!) &" >&2
+    "${BASH_SOURCE[0]}" watchdog "$CONFIG" "$WATCHDOG_INTERVAL" -! &
     WATCHDOG_PID=$!
 
     # watchdog setup done, update status
